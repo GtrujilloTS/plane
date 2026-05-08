@@ -5,6 +5,7 @@
  */
 
 import { observer } from "mobx-react";
+import { Layers } from "lucide-react";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // ui
@@ -46,6 +47,7 @@ import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/prop
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
 import { IssueModuleSelect } from "./module-select";
+import { IssueTypeSidebarSelect } from "./type-select";
 import type { TIssueOperations } from "./root";
 
 type Props = {
@@ -88,6 +90,15 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
         <div className="h-full w-full overflow-y-auto px-6">
           <h5 className="mt-5 text-body-xs-medium">{t("common.properties")}</h5>
           <div className={`mt-4 mb-2 space-y-2.5 truncate ${!isEditable ? "opacity-60" : ""}`}>
+            <SidebarPropertyListItem icon={Layers} label="Type">
+              <IssueTypeSidebarSelect
+                projectId={projectId}
+                value={issue.type_id}
+                onChange={(typeId) => issueOperations.update(workspaceSlug, projectId, issueId, { type_id: typeId })}
+                disabled={!isEditable}
+              />
+            </SidebarPropertyListItem>
+
             <SidebarPropertyListItem icon={StatePropertyIcon} label={t("common.state")}>
               <StateDropdown
                 value={issue?.state_id}
