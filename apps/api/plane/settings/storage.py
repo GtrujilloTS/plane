@@ -51,7 +51,7 @@ class S3Storage(S3Boto3Storage):
                 boto3_endpoint = f"{endpoint_protocol}://{request.get_host()}"
             else:
                 boto3_endpoint = self.aws_s3_endpoint_url
-            # Create an S3 client for MinIO
+            # Create an S3 client for MinIO (internal, for uploads and operations)
             self.s3_client = boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key_id,
@@ -60,6 +60,20 @@ class S3Storage(S3Boto3Storage):
                 endpoint_url=boto3_endpoint,
                 config=boto3.session.Config(signature_version="s3v4"),
             )
+            # For GET presigned URLs the signature covers the host, so we need a
+            # separate client that uses the externally accessible URL directly.
+            external_url = os.environ.get("MINIO_EXTERNAL_URL")
+            if external_url:
+                self.s3_client_external = boto3.client(
+                    "s3",
+                    aws_access_key_id=self.aws_access_key_id,
+                    aws_secret_access_key=self.aws_secret_access_key,
+                    region_name=self.aws_region,
+                    endpoint_url=external_url,
+                    config=boto3.session.Config(signature_version="s3v4"),
+                )
+            else:
+                self.s3_client_external = self.s3_client
         else:
             # Create an S3 client
             self.s3_client = boto3.client(
@@ -138,8 +152,11 @@ class S3Storage(S3Boto3Storage):
         if expiration is None:
             expiration = self.signed_url_expiration
         content_disposition = self._get_content_disposition(disposition, filename)
+        # Use the external client so the signature is computed against the
+        # browser-accessible host (localhost:9000 in local dev, not plane-minio:9000).
+        client = getattr(self, "s3_client_external", self.s3_client)
         try:
-            response = self.s3_client.generate_presigned_url(
+            response = client.generate_presigned_url(
                 "get_object",
                 Params={
                     "Bucket": self.aws_storage_bucket_name,
@@ -153,7 +170,6 @@ class S3Storage(S3Boto3Storage):
             log_exception(e)
             return None
 
-        # The response contains the presigned URL
         return response
 
     def get_object_metadata(self, object_name):
