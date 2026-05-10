@@ -21,6 +21,7 @@ import {
   EstimatePropertyIcon,
   ParentPropertyIcon,
 } from "@plane/propel/icons";
+import { Layers } from "lucide-react";
 import { cn, getDate, renderFormattedPayloadDate, shouldHighlightIssueDueDate } from "@plane/utils";
 // components
 import { DateDropdown } from "@/components/dropdowns/date";
@@ -45,6 +46,7 @@ import type { TIssueOperations } from "../issue-detail";
 import { IssueCycleSelect } from "../issue-detail/cycle-select";
 import { IssueLabel } from "../issue-detail/label";
 import { IssueModuleSelect } from "../issue-detail/module-select";
+import { IssueTypeSidebarSelect } from "../issue-detail/type-select";
 
 interface IPeekOverviewProperties {
   workspaceSlug: string;
@@ -82,6 +84,15 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
     <div>
       <h6 className="text-body-xs-medium">{t("common.properties")}</h6>
       <div className={`mt-3 w-full space-y-3 ${disabled ? "opacity-60" : ""}`}>
+        <SidebarPropertyListItem icon={Layers} label="Type">
+          <IssueTypeSidebarSelect
+            projectId={projectId}
+            value={issue.type_id}
+            onChange={(typeId) => issueOperations.update(workspaceSlug, projectId, issueId, { type_id: typeId })}
+            disabled={disabled}
+          />
+        </SidebarPropertyListItem>
+
         <SidebarPropertyListItem icon={StatePropertyIcon} label={t("common.state")}>
           <StateDropdown
             value={issue?.state_id}
