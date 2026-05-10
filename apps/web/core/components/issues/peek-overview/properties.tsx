@@ -46,7 +46,9 @@ import type { TIssueOperations } from "../issue-detail";
 import { IssueCycleSelect } from "../issue-detail/cycle-select";
 import { IssueLabel } from "../issue-detail/label";
 import { IssueModuleSelect } from "../issue-detail/module-select";
+// >>>>>> CUSTOM: type-select integration [GTS-001]
 import { IssueTypeSidebarSelect } from "../issue-detail/type-select";
+// <<<<<< END CUSTOM
 
 interface IPeekOverviewProperties {
   workspaceSlug: string;
@@ -84,6 +86,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
     <div>
       <h6 className="text-body-xs-medium">{t("common.properties")}</h6>
       <div className={`mt-3 w-full space-y-3 ${disabled ? "opacity-60" : ""}`}>
+        {/* >>>>>> CUSTOM: type-select integration [GTS-001] */}
         <SidebarPropertyListItem icon={Layers} label="Type">
           <IssueTypeSidebarSelect
             projectId={projectId}
@@ -92,6 +95,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             disabled={disabled}
           />
         </SidebarPropertyListItem>
+        {/* <<<<<< END CUSTOM */}
 
         <SidebarPropertyListItem icon={StatePropertyIcon} label={t("common.state")}>
           <StateDropdown

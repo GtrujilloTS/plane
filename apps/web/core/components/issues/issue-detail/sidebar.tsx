@@ -47,7 +47,9 @@ import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/prop
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
 import { IssueModuleSelect } from "./module-select";
+// >>>>>> CUSTOM: type-select integration [GTS-001]
 import { IssueTypeSidebarSelect } from "./type-select";
+// <<<<<< END CUSTOM
 import type { TIssueOperations } from "./root";
 
 type Props = {
@@ -90,6 +92,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
         <div className="h-full w-full overflow-y-auto px-6">
           <h5 className="mt-5 text-body-xs-medium">{t("common.properties")}</h5>
           <div className={`mt-4 mb-2 space-y-2.5 truncate ${!isEditable ? "opacity-60" : ""}`}>
+            {/* >>>>>> CUSTOM: type-select integration [GTS-001] */}
             <SidebarPropertyListItem icon={Layers} label="Type">
               <IssueTypeSidebarSelect
                 projectId={projectId}
@@ -98,6 +101,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 disabled={!isEditable}
               />
             </SidebarPropertyListItem>
+            {/* <<<<<< END CUSTOM */}
 
             <SidebarPropertyListItem icon={StatePropertyIcon} label={t("common.state")}>
               <StateDropdown

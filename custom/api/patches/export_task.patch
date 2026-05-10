@@ -1,0 +1,30 @@
+diff --git a/apps/api/plane/bgtasks/export_task.py b/apps/api/plane/bgtasks/export_task.py
+index 24486999d7..d932019519 100644
+--- a/apps/api/plane/bgtasks/export_task.py
++++ b/apps/api/plane/bgtasks/export_task.py
+@@ -61,12 +61,21 @@ def upload_to_s3(zip_file: io.BytesIO, workspace_id: UUID, token_id: str, slug:
+             ExtraArgs={"ACL": "public-read", "ContentType": "application/zip"},
+         )
+ 
+-        # Generate presigned url for the uploaded file with different base
++        # For presigned GET URLs the signature is bound to the endpoint host.
++        # Use MINIO_EXTERNAL_URL (browser-accessible) when available so the
++        # download link works outside Docker. Fall back to AWS_S3_CUSTOM_DOMAIN.
++        import os
++        minio_external_url = os.environ.get("MINIO_EXTERNAL_URL")
++        if minio_external_url:
++            presign_endpoint = minio_external_url
++        else:
++            presign_endpoint = (
++                f"{settings.AWS_S3_URL_PROTOCOL}//{str(settings.AWS_S3_CUSTOM_DOMAIN).replace('/uploads', '')}/"
++            )
++
+         presign_s3 = boto3.client(
+             "s3",
+-            endpoint_url=(
+-                f"{settings.AWS_S3_URL_PROTOCOL}//{str(settings.AWS_S3_CUSTOM_DOMAIN).replace('/uploads', '')}/"
+-            ),
++            endpoint_url=presign_endpoint,
+             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+             config=Config(signature_version="s3v4"),
