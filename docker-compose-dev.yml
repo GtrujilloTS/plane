@@ -1,0 +1,306 @@
+# Ambiente local — requiere Traefik corriendo en traefik-network
+# Levanta primero: cd ~/WorkCode/takumi-dev.com/treafik && docker compose up -d
+# Dominio local: plane.localhost
+# Agrega a /etc/hosts si no resuelve: 127.0.0.1 plane.localhost
+
+networks:
+  traefik-network:
+    external: true
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infraestructura — puertos expuestos para debugging local
+  # ---------------------------------------------------------------------------
+  plane-db:
+    container_name: plane-db
+    image: postgres:15.7-alpine
+    restart: unless-stopped
+    command: postgres -c 'max_connections=1000'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - .env.local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - traefik-network
+
+  plane-redis:
+    container_name: plane-redis
+    image: valkey/valkey:7.2.11-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6381:6379"
+    networks:
+      - traefik-network
+
+  plane-mq:
+    container_name: plane-mq
+    image: rabbitmq:3.13.6-management-alpine
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5674:5672"
+      - "15674:15672"
+    networks:
+      - traefik-network
+
+  plane-minio:
+    container_name: plane-minio
+    image: minio/minio
+    restart: unless-stopped
+    entrypoint: >
+      /bin/sh -c "
+      mkdir -p /export/${AWS_S3_BUCKET_NAME:-uploads} &&
+      minio server /export --console-address ':9090' &
+      sleep 5 &&
+      mc alias set myminio http://localhost:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} &&
+      mc mb myminio/${AWS_S3_BUCKET_NAME:-uploads} -p || true &&
+      tail -f /dev/null
+      "
+    volumes:
+      - uploads:/export
+    env_file:
+      - .env.local
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+    ports:
+      - "9002:9000"
+      - "9092:9090"
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.plane-minio-dev.rule=Host(`plane.localhost`) && PathPrefix(`/${AWS_S3_BUCKET_NAME:-uploads}`)"
+      - "traefik.http.routers.plane-minio-dev.entrypoints=web"
+      - "traefik.http.routers.plane-minio-dev.priority=10"
+      - "traefik.http.services.plane-minio-dev.loadbalancer.server.port=9000"
+
+  # ---------------------------------------------------------------------------
+  # Backend — Dockerfile.dev con hot-reload via volumen montado
+  # ---------------------------------------------------------------------------
+  migrator:
+    container_name: plane-migrator
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: "no"
+    volumes:
+      - ./apps/api:/code
+    command: ./bin/docker-entrypoint-migrator.sh --settings=plane.settings.local
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - plane-db
+      - plane-redis
+    networks:
+      - traefik-network
+
+  api:
+    container_name: plane-api
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    volumes:
+      - ./apps/api:/code
+    command: ./bin/docker-entrypoint-api-local.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - plane-db
+      - plane-redis
+      - plane-mq
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.plane-api-dev.rule=Host(`plane.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/auth`) || PathPrefix(`/static`))"
+      - "traefik.http.routers.plane-api-dev.entrypoints=web"
+      - "traefik.http.routers.plane-api-dev.priority=10"
+      - "traefik.http.services.plane-api-dev.loadbalancer.server.port=8000"
+
+  worker:
+    container_name: plane-bgworker
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    volumes:
+      - ./apps/api:/code
+    command: ./bin/docker-entrypoint-worker.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+    networks:
+      - traefik-network
+
+  beat-worker:
+    container_name: plane-beatworker
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    volumes:
+      - ./apps/api:/code
+    command: ./bin/docker-entrypoint-beat.sh
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - api
+      - plane-db
+      - plane-redis
+    networks:
+      - traefik-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Dockerfile.dev, accesibles via Traefik en plane.localhost
+  # ---------------------------------------------------------------------------
+  web:
+    container_name: plane-web
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    command: sh -c "turbo dev --filter=web -- --host"
+    environment:
+      - VITE_API_BASE_URL=
+      - VITE_API_BASE_PATH=/api
+      - VITE_ADMIN_BASE_URL=
+      - VITE_ADMIN_BASE_PATH=/god-mode/
+      - VITE_SPACE_BASE_URL=
+      - VITE_SPACE_BASE_PATH=/spaces/
+      - VITE_LIVE_BASE_URL=
+      - VITE_LIVE_BASE_PATH=/live/
+      - VITE_WEB_BASE_URL=
+      - VITE_WEB_BASE_PATH=/
+    depends_on:
+      - api
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.plane-web-dev.rule=Host(`plane.localhost`) && PathPrefix(`/`)"
+      - "traefik.http.routers.plane-web-dev.entrypoints=web"
+      - "traefik.http.routers.plane-web-dev.priority=1"
+      - "traefik.http.services.plane-web-dev.loadbalancer.server.port=3000"
+
+  admin:
+    container_name: plane-admin
+    build:
+      context: .
+      dockerfile: ./apps/admin/Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    command: sh -c "turbo dev --filter=admin -- --host"
+    environment:
+      - VITE_API_BASE_URL=
+      - VITE_API_BASE_PATH=/api
+      - VITE_ADMIN_BASE_URL=
+      - VITE_ADMIN_BASE_PATH=/god-mode/
+      - VITE_WEB_BASE_URL=
+      - VITE_WEB_BASE_PATH=/
+    depends_on:
+      - api
+      - web
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.plane-admin-dev.rule=Host(`plane.localhost`) && PathPrefix(`/god-mode`)"
+      - "traefik.http.routers.plane-admin-dev.entrypoints=web"
+      - "traefik.http.routers.plane-admin-dev.priority=10"
+      - "traefik.http.services.plane-admin-dev.loadbalancer.server.port=3001"
+
+  space:
+    container_name: plane-space
+    build:
+      context: .
+      dockerfile: ./apps/space/Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    command: sh -c "turbo dev --filter=space -- --host"
+    environment:
+      - VITE_API_BASE_URL=
+      - VITE_API_BASE_PATH=/api
+      - VITE_SPACE_BASE_URL=
+      - VITE_SPACE_BASE_PATH=/spaces/
+      - VITE_WEB_BASE_URL=
+      - VITE_WEB_BASE_PATH=/
+    depends_on:
+      - api
+      - web
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.plane-space-dev.rule=Host(`plane.localhost`) && PathPrefix(`/spaces`)"
+      - "traefik.http.routers.plane-space-dev.entrypoints=web"
+      - "traefik.http.routers.plane-space-dev.priority=10"
+      - "traefik.http.services.plane-space-dev.loadbalancer.server.port=3002"
+
+  live:
+    container_name: plane-live
+    build:
+      context: .
+      dockerfile: ./apps/live/Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    environment:
+      - API_BASE_URL=http://plane-api:8000
+      - LIVE_SERVER_SECRET_KEY=plane-live-dev-secret
+      - REDIS_URL=redis://plane-redis:6379/
+      - CORS_ALLOWED_ORIGINS=http://plane.localhost
+      - LIVE_BASE_PATH=/live
+      - PORT=3000
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.plane-live-dev.rule=Host(`plane.localhost`) && PathPrefix(`/live`)"
+      - "traefik.http.routers.plane-live-dev.entrypoints=web"
+      - "traefik.http.routers.plane-live-dev.priority=10"
+      - "traefik.http.services.plane-live-dev.loadbalancer.server.port=3000"
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+  rabbitmq_data:
