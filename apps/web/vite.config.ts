@@ -1,8 +1,11 @@
 import path from "node:path";
+import { createRequire } from "node:module";
 import * as dotenv from "dotenv";
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+const require = createRequire(import.meta.url);
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
@@ -28,6 +31,8 @@ export default defineConfig(() => ({
       "next/link": path.resolve(__dirname, "app/compat/next/link.tsx"),
       "next/navigation": path.resolve(__dirname, "app/compat/next/navigation.ts"),
       "next/script": path.resolve(__dirname, "app/compat/next/script.tsx"),
+      // CUSTOM: resolve lucide-react from apps/web so files in custom/ can use it [GTS-004]
+      "lucide-react": path.dirname(require.resolve("lucide-react/package.json")),
     },
     dedupe: ["react", "react-dom", "@headlessui/react"],
   },
