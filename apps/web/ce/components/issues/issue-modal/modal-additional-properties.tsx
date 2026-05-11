@@ -113,7 +113,7 @@ function FieldInput({
   return null;
 }
 
-export const WorkItemModalAdditionalProperties = observer(function WorkItemModalAdditionalProperties({
+function WorkItemModalAdditionalPropertiesInner({
   projectId,
   workItemId,
   workspaceSlug,
@@ -198,4 +198,6 @@ export const WorkItemModalAdditionalProperties = observer(function WorkItemModal
       ))}
     </div>
   );
-});
+}
+
+export const WorkItemModalAdditionalProperties = observer(WorkItemModalAdditionalPropertiesInner);
