@@ -78,7 +78,8 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
           />
         </Tooltip>
         <HelpMenuRoot />
-        <StarUsOnGitHubLink />
+        {/* >>>>>> CUSTOM: hide branding buttons [GTS-003] — eliminado el botón "Star us on GitHub" del header */}
+        {/* <<<<<< END CUSTOM */}
         <div className="flex size-8 items-center justify-center rounded-md hover:bg-layer-1-hover">
           <UserMenuRoot />
         </div>

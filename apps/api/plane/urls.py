@@ -16,6 +16,9 @@ handler404 = "plane.app.views.error_404.custom_404_view"
 
 urlpatterns = [
     path("api/", include("plane.app.urls")),
+    # >>>>>> CUSTOM: shared issues public + internal endpoints [GTS-004]
+    path("api/", include("plane.app.shared_issues.urls")),
+    # <<<<<< END CUSTOM
     path("api/public/", include("plane.space.urls")),
     path("api/instances/", include("plane.license.urls")),
     path("api/v1/", include("plane.api.urls")),

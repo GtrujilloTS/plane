@@ -193,15 +193,19 @@ services:
         DOCKER_BUILDKIT: 1
     restart: unless-stopped
     command: sh -c "turbo dev --filter=web -- --host"
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./custom:/app/custom
+      - /app/apps/web/node_modules
     environment:
       - VITE_API_BASE_URL=
       - VITE_API_BASE_PATH=/api
       - VITE_ADMIN_BASE_URL=
       - VITE_ADMIN_BASE_PATH=/god-mode/
       - VITE_SPACE_BASE_URL=
-      - VITE_SPACE_BASE_PATH=/spaces/
+      - VITE_SPACE_BASE_PATH=/spaces
       - VITE_LIVE_BASE_URL=
-      - VITE_LIVE_BASE_PATH=/live/
+      - VITE_LIVE_BASE_PATH=/live
       - VITE_WEB_BASE_URL=
       - VITE_WEB_BASE_PATH=/
     depends_on:
@@ -258,7 +262,7 @@ services:
       - VITE_API_BASE_URL=
       - VITE_API_BASE_PATH=/api
       - VITE_SPACE_BASE_URL=
-      - VITE_SPACE_BASE_PATH=/spaces/
+      - VITE_SPACE_BASE_PATH=/spaces
       - VITE_WEB_BASE_URL=
       - VITE_WEB_BASE_PATH=/
     depends_on:

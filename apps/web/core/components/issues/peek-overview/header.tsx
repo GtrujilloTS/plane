@@ -4,10 +4,12 @@
  * See the LICENSE file for details.
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
-import { MoveDiagonal, MoveRight } from "lucide-react";
+import { MoveDiagonal, MoveRight, Share2 } from "lucide-react";
+// CUSTOM: share issue [GTS-004]
+import { ShareModal } from "@/custom/shared-issue/share-modal";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { CenterPanelIcon, CopyLinkIcon, FullScreenPanelIcon, SidePanelIcon } from "@plane/propel/icons";
@@ -87,6 +89,8 @@ export const IssuePeekOverviewHeader = observer(function IssuePeekOverviewHeader
   } = props;
   // ref
   const parentRef = useRef<HTMLDivElement>(null);
+  // CUSTOM: share modal state [GTS-004]
+  const [shareOpen, setShareOpen] = useState(false);
   const { t } = useTranslation();
   // store hooks
   const { data: currentUser } = useUser();
@@ -208,6 +212,26 @@ export const IssuePeekOverviewHeader = observer(function IssuePeekOverviewHeader
           <Tooltip tooltipContent={t("common.actions.copy_link")} isMobile={isMobile}>
             <IconButton variant="secondary" size="lg" onClick={handleCopyText} icon={CopyLinkIcon} />
           </Tooltip>
+          {/* CUSTOM: share issue button in peek header [GTS-004] */}
+          {!isArchived && (
+            <Tooltip tooltipContent="Compartir issue" isMobile={isMobile}>
+              <button
+                onClick={() => setShareOpen(true)}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </Tooltip>
+          )}
+          {shareOpen && (
+            <ShareModal
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              issueId={issueId}
+              onClose={() => setShareOpen(false)}
+            />
+          )}
+          {/* END CUSTOM */}
           {issueDetails && (
             <WorkItemDetailQuickActions
               parentRef={parentRef}

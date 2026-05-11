@@ -4,6 +4,13 @@
  * See the LICENSE file for details.
  */
 
+import { layout, route } from "@react-router/dev/routes";
 import type { RouteConfigEntry } from "@react-router/dev/routes";
 
-export const extendedRoutes: RouteConfigEntry[] = [];
+// >>>>>> CUSTOM: shared issue public routes [GTS-004]
+export const extendedRoutes: RouteConfigEntry[] = [
+  layout("./(public)/shared/issue/[token]/layout.tsx", [
+    route("shared/issue/:token", "./(public)/shared/issue/[token]/page.tsx"),
+  ]),
+];
+// <<<<<< END CUSTOM

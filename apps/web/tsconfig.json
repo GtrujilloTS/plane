@@ -7,6 +7,7 @@
       "@/helpers/*": ["./helpers/*"],
       "@/styles/*": ["./styles/*"],
       "@/plane-web/*": ["./ce/*"],
+      "@/custom/*": ["../../custom/web/components/*"],
       "package.json": ["./package.json"]
     },
     "strictNullChecks": true,

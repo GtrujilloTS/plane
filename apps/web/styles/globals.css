@@ -4,6 +4,8 @@
 @import "./power-k.css";
 @import "./emoji.css";
 @plugin "@tailwindcss/typography";
+/* CUSTOM: scan custom/ directory for Tailwind class detection [GTS-004] */
+@source "../../../custom/**/*.{ts,tsx}";
 
 /* stickies and editor colors */
 :root {

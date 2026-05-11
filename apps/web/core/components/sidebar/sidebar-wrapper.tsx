@@ -81,15 +81,8 @@ export const SidebarWrapper = observer(function SidebarWrapper(props: TSidebarWr
         >
           {children}
         </ScrollArea>
-        {/* Help Section */}
-        <div className="flex h-12 items-center justify-between border-t border-subtle bg-surface-1 p-3">
-          <WorkspaceEditionBadge />
-          {/* TODO: To be checked if we need this */}
-          {/* <div className="flex items-center gap-2">
-          {!shouldRenderAppRail && <HelpMenu />}
-          {!isAppRailEnabled && <AppSidebarToggleButton />}
-        </div> */}
-        </div>
+        {/* >>>>>> CUSTOM: hide branding buttons [GTS-003] — eliminado el badge Community del footer del sidebar */}
+        {/* <<<<<< END CUSTOM */}
       </div>
     </>
   );

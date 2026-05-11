@@ -50,6 +50,9 @@ import { IssueModuleSelect } from "./module-select";
 // >>>>>> CUSTOM: type-select integration [GTS-001]
 import { IssueTypeSidebarSelect } from "./type-select";
 // <<<<<< END CUSTOM
+// >>>>>> CUSTOM: issue share button [GTS-004]
+import { IssueShareButton } from "@/custom/shared-issue/share-button";
+// <<<<<< END CUSTOM
 import type { TIssueOperations } from "./root";
 
 type Props = {
@@ -289,6 +292,16 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               isEditable={isEditable}
             />
           </div>
+
+          {/* >>>>>> CUSTOM: issue share button [GTS-004] */}
+          <div className="mt-4 mb-4 border-t border-custom-border-200 pt-3">
+            <IssueShareButton
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              issueId={issueId}
+            />
+          </div>
+          {/* <<<<<< END CUSTOM */}
         </div>
       </div>
     </>

@@ -70,6 +70,9 @@ INSTALLED_APPS = [
     "plane.license",
     "plane.api",
     "plane.authentication",
+    # >>>>>> CUSTOM: shared issues module [GTS-004]
+    "plane.app.shared_issues",
+    # <<<<<< END CUSTOM
     # Third-party things
     "rest_framework",
     "corsheaders",
