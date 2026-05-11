@@ -82,6 +82,8 @@ services:
     depends_on:
       - plane-db
       - plane-redis
+      - plane-minio
+      - plane-mq
     networks:
       - traefik-network
     labels:
@@ -101,6 +103,15 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    environment:
+      - API_BASE_URL=http://plane-api:8000
+      - REDIS_URL=${REDIS_URL}
+      - LIVE_SERVER_SECRET_KEY=${LIVE_SERVER_SECRET_KEY}
+      - CORS_ALLOWED_ORIGINS=https://${DOMAIN}
+      - LIVE_BASE_PATH=/live
+      - PORT=3000
+    depends_on:
+      - api
     networks:
       - traefik-network
     labels:
@@ -210,9 +221,19 @@ services:
     container_name: plane-minio
     image: minio/minio
     restart: always
-    command: server /export --console-address ":9090"
+    entrypoint: >
+      /bin/sh -c "
+      mkdir -p /export/${AWS_S3_BUCKET_NAME:-uploads} &&
+      minio server /export --console-address ':9090' &
+      sleep 5 &&
+      mc alias set myminio http://localhost:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} &&
+      mc mb myminio/${AWS_S3_BUCKET_NAME:-uploads} -p || true &&
+      tail -f /dev/null
+      "
     volumes:
       - uploads:/export
+    env_file:
+      - .env
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
