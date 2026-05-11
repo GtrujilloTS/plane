@@ -1,5 +1,5 @@
 networks:
-  traefik-net:
+  traefik-network:
     external: true
 
 services:
@@ -14,10 +14,10 @@ services:
     depends_on:
       - api
     networks:
-      - traefik-net
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plane-web.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
       - "traefik.http.routers.plane-web.entrypoints=websecure"
       - "traefik.http.routers.plane-web.tls=true"
@@ -36,10 +36,10 @@ services:
       - api
       - web
     networks:
-      - traefik-net
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plane-admin.rule=Host(`${DOMAIN}`) && PathPrefix(`/god-mode`)"
       - "traefik.http.routers.plane-admin.entrypoints=websecure"
       - "traefik.http.routers.plane-admin.tls=true"
@@ -58,10 +58,10 @@ services:
       - api
       - web
     networks:
-      - traefik-net
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plane-space.rule=Host(`${DOMAIN}`) && PathPrefix(`/spaces`)"
       - "traefik.http.routers.plane-space.entrypoints=websecure"
       - "traefik.http.routers.plane-space.tls=true"
@@ -83,10 +83,10 @@ services:
       - plane-db
       - plane-redis
     networks:
-      - traefik-net
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plane-api.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/auth`) || PathPrefix(`/static`))"
       - "traefik.http.routers.plane-api.entrypoints=websecure"
       - "traefik.http.routers.plane-api.tls=true"
@@ -102,10 +102,10 @@ services:
         DOCKER_BUILDKIT: 1
     restart: always
     networks:
-      - traefik-net
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plane-live.rule=Host(`${DOMAIN}`) && PathPrefix(`/live`)"
       - "traefik.http.routers.plane-live.entrypoints=websecure"
       - "traefik.http.routers.plane-live.tls=true"
@@ -128,7 +128,7 @@ services:
       - plane-db
       - plane-redis
     networks:
-      - traefik-net
+      - traefik-network
 
   beat-worker:
     container_name: plane-beatworker
@@ -146,7 +146,7 @@ services:
       - plane-db
       - plane-redis
     networks:
-      - traefik-net
+      - traefik-network
 
   migrator:
     container_name: plane-migrator
@@ -163,7 +163,7 @@ services:
       - plane-db
       - plane-redis
     networks:
-      - traefik-net
+      - traefik-network
 
   plane-db:
     container_name: plane-db
@@ -180,7 +180,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /var/lib/postgresql/data
     networks:
-      - traefik-net
+      - traefik-network
 
   plane-redis:
     container_name: plane-redis
@@ -189,7 +189,7 @@ services:
     volumes:
       - redisdata:/data
     networks:
-      - traefik-net
+      - traefik-network
 
   plane-mq:
     container_name: plane-mq
@@ -204,7 +204,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - traefik-net
+      - traefik-network
 
   plane-minio:
     container_name: plane-minio
@@ -217,10 +217,10 @@ services:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
     networks:
-      - traefik-net
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plane-minio.rule=Host(`${DOMAIN}`) && PathPrefix(`/${AWS_S3_BUCKET_NAME:-uploads}`)"
       - "traefik.http.routers.plane-minio.entrypoints=websecure"
       - "traefik.http.routers.plane-minio.tls=true"
