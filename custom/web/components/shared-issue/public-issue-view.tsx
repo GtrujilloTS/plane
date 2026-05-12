@@ -3,6 +3,14 @@ import { usePublicIssue, useExternalComments } from "./use-public-issue";
 import { ExternalCommentForm } from "./external-comment-form";
 import { ApprovalWidget } from "./approval-widget";
 
+const UUID_RE = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gi;
+
+function resolveImages(html: string, token: string): string {
+  return html.replace(/src="([^"]+)"/g, (match, src) =>
+    UUID_RE.test(src) ? `src="/api/shared/issue/${token}/assets/${src}/"` : match
+  );
+}
+
 const PRIORITY_LABELS: Record<string, { label: string; color: string }> = {
   urgent: { label: "Urgente", color: "#ef4444" },
   high: { label: "Alta", color: "#f97316" },
@@ -102,7 +110,7 @@ export function PublicIssueView({ token }: { token: string }) {
         {issue.description_html ? (
           <div
             className="prose prose-sm max-w-none text-primary"
-            dangerouslySetInnerHTML={{ __html: issue.description_html }}
+            dangerouslySetInnerHTML={{ __html: resolveImages(issue.description_html, token) }}
           />
         ) : (
           <p className="text-sm text-tertiary italic">Sin descripción.</p>
