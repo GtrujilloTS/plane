@@ -21,6 +21,7 @@ services:
       - "traefik.http.routers.plane-web.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
       - "traefik.http.routers.plane-web.entrypoints=websecure"
       - "traefik.http.routers.plane-web.tls=true"
+      - "traefik.http.routers.plane-web.tls.certresolver=letsencrypt"
       - "traefik.http.routers.plane-web.priority=1"
       - "traefik.http.services.plane-web.loadbalancer.server.port=3000"
 
@@ -43,6 +44,7 @@ services:
       - "traefik.http.routers.plane-admin.rule=Host(`${DOMAIN}`) && PathPrefix(`/god-mode`)"
       - "traefik.http.routers.plane-admin.entrypoints=websecure"
       - "traefik.http.routers.plane-admin.tls=true"
+      - "traefik.http.routers.plane-admin.tls.certresolver=letsencrypt"
       - "traefik.http.routers.plane-admin.priority=10"
       - "traefik.http.services.plane-admin.loadbalancer.server.port=3000"
 
@@ -65,6 +67,7 @@ services:
       - "traefik.http.routers.plane-space.rule=Host(`${DOMAIN}`) && PathPrefix(`/spaces`)"
       - "traefik.http.routers.plane-space.entrypoints=websecure"
       - "traefik.http.routers.plane-space.tls=true"
+      - "traefik.http.routers.plane-space.tls.certresolver=letsencrypt"
       - "traefik.http.routers.plane-space.priority=10"
       - "traefik.http.services.plane-space.loadbalancer.server.port=3000"
 
@@ -92,6 +95,7 @@ services:
       - "traefik.http.routers.plane-api.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/auth`) || PathPrefix(`/static`))"
       - "traefik.http.routers.plane-api.entrypoints=websecure"
       - "traefik.http.routers.plane-api.tls=true"
+      - "traefik.http.routers.plane-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.plane-api.priority=10"
       - "traefik.http.services.plane-api.loadbalancer.server.port=8000"
 
@@ -120,6 +124,7 @@ services:
       - "traefik.http.routers.plane-live.rule=Host(`${DOMAIN}`) && PathPrefix(`/live`)"
       - "traefik.http.routers.plane-live.entrypoints=websecure"
       - "traefik.http.routers.plane-live.tls=true"
+      - "traefik.http.routers.plane-live.tls.certresolver=letsencrypt"
       - "traefik.http.routers.plane-live.priority=10"
       - "traefik.http.services.plane-live.loadbalancer.server.port=3000"
 
@@ -245,6 +250,7 @@ services:
       - "traefik.http.routers.plane-minio.rule=Host(`${DOMAIN}`) && PathPrefix(`/${AWS_S3_BUCKET_NAME:-uploads}`)"
       - "traefik.http.routers.plane-minio.entrypoints=websecure"
       - "traefik.http.routers.plane-minio.tls=true"
+      - "traefik.http.routers.plane-minio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.plane-minio.priority=10"
       - "traefik.http.services.plane-minio.loadbalancer.server.port=9000"
 
